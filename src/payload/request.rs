@@ -13,6 +13,7 @@ enum Operation {
     CreateRoom,
     JoinRoom,
     LeaveRoom,
+    SendMessage,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -20,6 +21,9 @@ enum Operation {
 pub enum Data {
     CreateRoom {
         room_id: String
+    },
+    SendMessage {
+        text: String
     }
 }
 
