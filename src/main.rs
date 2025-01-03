@@ -1,15 +1,18 @@
+use futures::stream::SplitSink;
+use futures::{SinkExt, StreamExt};
 use std::collections::HashMap;
-use std::net::{TcpListener, TcpStream};
-use std::sync::{Arc, Mutex};
-use std::thread;
+use std::net::SocketAddr;
+use std::sync::Arc;
+use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::Mutex;
+use tokio_tungstenite::{accept_async, WebSocketStream};
 use tracing::{error, info};
-use tungstenite::{accept, Error as WsError, Message, Utf8Bytes, WebSocket};
-use std::sync::mpsc;
+use tungstenite::Message;
 
 type ClientId = uuid::Uuid;
 
 struct ServerState {
-    clients: HashMap<ClientId, Arc<Mutex<WebSocket<TcpStream>>>>,
+    clients: HashMap<ClientId, SplitSink<WebSocketStream<TcpStream>, Message>>,
 }
 
 impl ServerState {
@@ -19,121 +22,116 @@ impl ServerState {
         }
     }
 
-    fn add_client(&mut self, id: ClientId, ws: Arc<Mutex<WebSocket<TcpStream>>>) {
-        self.clients.insert(id, ws);
+    fn add_client(
+        &mut self,
+        id: ClientId,
+        tx: futures::stream::SplitSink<WebSocketStream<tokio::net::TcpStream>, Message>,
+    ) {
+        self.clients.insert(id, tx);
     }
 
     fn remove_client(&mut self, id: &ClientId) {
         self.clients.remove(id);
     }
+}
 
-    fn broadcast(&self, message: &Utf8Bytes) {
-        for (client_id, client_ws) in &self.clients {
-            let mut ws = client_ws.lock().unwrap();
-            if let Err(e) = ws.send(Message::Text(message.clone())) {
-                error!("Failed to send message to {}: {}", client_id, e);
-            }
+async fn broadcast_message(state: &Arc<Mutex<ServerState>>, message: &Message, from: &ClientId) {
+    // todo ブロードキャスト時にロックがかかるのでパフォーマンスに懸念がある
+    // ロックをかけずに送信キューを作成して送信処理を非同期で行うべき
+    let mut locked = state.lock().await;
+
+    for (to, sink) in locked.clients.iter_mut() {
+        // 自分自身には送信しない
+        if to == from {
+            continue;
+        }
+
+        if let Err(e) = sink.send(message.clone()).await {
+            error!("Error sending message to client: {}", e);
         }
     }
 }
 
-fn main() {
+async fn handle_connection(
+    state: Arc<Mutex<ServerState>>,
+    websocket: WebSocketStream<TcpStream>,
+    socket_addr: SocketAddr,
+    client_id: ClientId,
+) {
+    let (tx, mut rx) = websocket.split();
+
+    // クライアントを登録
+    {
+        let mut locked = state.lock().await;
+        locked.add_client(client_id, tx);
+    }
+
+    info!("Client {} connected from {}", client_id, socket_addr);
+
+    while let Some(message) = rx.next().await {
+        match message {
+            Ok(Message::Text(text)) => {
+                info!("Received message: {}", text);
+
+                let message = Message::Text(text);
+                broadcast_message(&state, &message, &client_id).await;
+            }
+            Ok(Message::Close(_)) => {
+                info!("Client {} disconnected", client_id);
+                break;
+            }
+            Err(e) => {
+                error!("Error reading message: {}", e);
+                break;
+            }
+            _ => continue,
+        }
+    }
+
+    // クライアントを削除
+    {
+        let mut locked = state.lock().await;
+        locked.remove_client(&client_id);
+    }
+    info!("Client {} disconnected", client_id);
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
         .with_thread_ids(true)
         .with_thread_names(true)
         .init();
 
-    let addr = "127.0.0.1";
-    let port = 9001;
+    let state = Arc::new(Mutex::new(ServerState::new()));
 
-    let server_state = Arc::new(Mutex::new(ServerState::new()));
-    let (tx, rx) = mpsc::channel::<Utf8Bytes>();
+    let listener = {
+        let addr = "127.0.0.1";
+        let port = 9001;
+        let listener = TcpListener::bind(format!("{}:{}", addr, port)).await?;
 
-    {
-        let server_state = Arc::clone(&server_state);
-        thread::spawn(move || {
-            while let Ok(message) = rx.recv() {
-                info!("Broadcasting message: {}", message);
-                let state = server_state.lock().unwrap();
-                state.broadcast(&message);
-            }
-        });
-    }
+        info!("Server started at {}:{}", addr, port);
 
-    match TcpListener::bind(format!("{}:{}", addr, port)) {
-        Ok(server) => {
-            info!("Server started at {}:{}", addr, port);
+        listener
+    };
 
-            for stream in server.incoming() {
-                let server_state = Arc::clone(&server_state);
-                let tx = tx.clone();
+    loop {
+        let (stream, socket_addr) = listener.accept().await?;
 
-                match stream {
-                    Ok(stream) => {
-                        thread::spawn(move || {
-                            let client_id = uuid::Uuid::new_v4();
+        let state_clone = state.clone();
+        let client_id = uuid::Uuid::new_v4();
 
-                            info!(
-                                "New connection from {}, ID: {}",
-                                stream.peer_addr().unwrap(),
-                                client_id
-                            );
+        tokio::spawn(async move {
+            let ws_stream = accept_async(stream).await;
 
-                            let websocket = match accept(stream) {
-                                Ok(ws) => Arc::new(Mutex::new(ws)),
-                                Err(e) => {
-                                    error!("Failed to establish connection: {}", e);
-                                    return;
-                                }
-                            };
-
-                            {
-                                let mut server_state = server_state.lock().unwrap();
-                                server_state.add_client(client_id, Arc::clone(&websocket));
-                            }
-
-                            loop {
-                                let message = {
-                                    let mut ws = websocket.lock().unwrap();
-                                    ws.read()
-                                };
-
-                                match message {
-                                    Ok(Message::Text(text)) => {
-                                        if let Err(e) = tx.send(text) {
-                                            error!(
-                                                "Failed to send message to broadcast thread: {}",
-                                                e
-                                            );
-                                        }
-                                    }
-                                    Ok(Message::Close(_)) | Err(WsError::ConnectionClosed) => {
-                                        info!("Connection closed for client ID: {}", client_id);
-                                        break;
-                                    }
-                                    Err(e) => {
-                                        error!("Error reading message for client {}: {}", client_id, e);
-                                        break;
-                                    }
-                                    _ => continue,
-                                }
-                            }
-
-                            {
-                                let mut server_state = server_state.lock().unwrap();
-                                server_state.remove_client(&client_id);
-                            }
-                        });
-                    }
-                    Err(e) => {
-                        error!("Failed to accept connection: {}", e);
-                        continue;
-                    }
+            match ws_stream {
+                Ok(websocket) => {
+                    handle_connection(state_clone, websocket, socket_addr, client_id).await;
+                }
+                Err(e) => {
+                    error!("Failed to establish connection: {}", e);
                 }
             }
-        }
-        Err(e) => {
-            error!("Failed to bind to {}:{}. Error: {}", addr, port, e);
-        }
+        });
     }
 }
