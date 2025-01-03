@@ -2,6 +2,7 @@ mod server;
 mod state;
 mod domain;
 mod usecase;
+mod payload;
 
 use crate::state::room_manager::RoomManager;
 use crate::state::user_manager::UserManager;

@@ -10,6 +10,7 @@ use tokio::sync::Mutex;
 use tokio_tungstenite::WebSocketStream;
 use tracing::{error, info};
 use tungstenite::Message;
+use crate::payload::request::Request;
 
 pub async fn handle_connection(
     room_manager: Arc<Mutex<RoomManager>>,
@@ -71,11 +72,22 @@ async fn handle_incoming(
     user: Arc<User>,
     mut stream: futures::stream::SplitStream<WebSocketStream<TcpStream>>,
 ) {
+    // todo 長過ぎるメッセージを受信した場合に無視する
     while let Some(message) = stream.next().await {
         match message {
             Ok(message) => match message {
                 Message::Text(text) => {
                     info!("Received message: {}", text);
+
+                    // todo リクエストをパースし、メッセージごとにハンドリング
+                    match Request::parse(&text) {
+                        Ok(request) => {
+                            info!("Parsed request: {:?}", request);
+                        }
+                        Err(e) => {
+                            error!("Error parsing request: {}", e);
+                        }
+                    }
                 }
                 Message::Close(_) => {
                     info!("Connection closed");
