@@ -20,6 +20,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_thread_names(true)
         .init();
 
+    // todo サーバーの設定をファイルから読み込むようにしたい
+    // todo コネクションの接続数に制限をかけたい
     let listener = {
         let addr = "127.0.0.1";
         let port = 9001;
