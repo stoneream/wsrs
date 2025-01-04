@@ -4,12 +4,12 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "snake_case")]
 pub struct Request {
     pub operation: Operation,
-    pub data: Option<Data>
+    pub data: Option<Data>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-enum Operation {
+pub enum Operation {
     CreateRoom,
     JoinRoom,
     LeaveRoom,
@@ -19,12 +19,8 @@ enum Operation {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Data {
-    CreateRoom {
-        room_id: String
-    },
-    SendMessage {
-        text: String
-    }
+    CreateRoom { room_id: String },
+    SendMessage { text: String },
 }
 
 impl Request {

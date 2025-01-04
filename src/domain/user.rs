@@ -19,4 +19,8 @@ impl User {
             tx,
         }
     }
+
+    pub fn send(&self, message: Message) {
+        let _ = self.tx.send(message);
+    }
 }

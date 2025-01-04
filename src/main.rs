@@ -1,8 +1,8 @@
+mod domain;
+mod payload;
 mod server;
 mod state;
-mod domain;
 mod usecase;
-mod payload;
 
 use crate::state::room_manager::RoomManager;
 use crate::state::user_manager::UserManager;
@@ -11,7 +11,6 @@ use tokio::net::TcpListener;
 use tokio::sync::Mutex;
 use tokio_tungstenite::accept_async;
 use tracing::{error, info};
-
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -52,7 +51,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         user_manager_clone,
                         ws_stream,
                         socket_addr,
-                    ).await;
+                    )
+                    .await;
                 }
                 Err(e) => {
                     error!("Failed to establish connection: {}", e);

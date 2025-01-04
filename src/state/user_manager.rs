@@ -11,7 +11,7 @@ pub struct UserManager {
 impl UserManager {
     pub fn new() -> Self {
         Self {
-            users: HashMap::new()
+            users: HashMap::new(),
         }
     }
 

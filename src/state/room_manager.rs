@@ -10,7 +10,7 @@ pub struct RoomManager {
 impl RoomManager {
     pub fn new() -> Self {
         Self {
-            rooms: HashMap::new()
+            rooms: HashMap::new(),
         }
     }
 
@@ -20,5 +20,13 @@ impl RoomManager {
 
     pub fn remove_room(&mut self, room_id: &RoomId) {
         self.rooms.remove(room_id);
+    }
+
+    pub fn get_room(&self, room_id: &RoomId) -> Option<&Room> {
+        self.rooms.get(room_id)
+    }
+
+    pub fn get_rooms(&self) -> Vec<&Room> {
+        self.rooms.values().collect()
     }
 }

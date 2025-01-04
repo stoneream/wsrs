@@ -15,4 +15,8 @@ impl Room {
             members: Vec::new(),
         }
     }
+
+    pub fn add_member(&mut self, user_id: UserId) {
+        self.members.push(user_id);
+    }
 }
