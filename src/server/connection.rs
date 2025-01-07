@@ -1,10 +1,12 @@
 use crate::domain::user::User;
-use crate::payload;
 use crate::payload::raw_request::{Operation, RawRequest};
+use crate::server::result_mapper::abstract_result_mapper::AbstractResultMapper;
+use crate::server::result_mapper::create_room::create_room_result_mapper::CreateRoomResultMapper;
 use crate::state::room_manager::RoomManager;
 use crate::state::user_manager::UserManager;
+use crate::usecase::abstract_handler::AbstractHandler;
 use crate::usecase::create_room_usecase::create_room_handler::{
-    CreateRoomHandler, CreateRoomHandlerError, CreateRoomHandlerInput,
+    CreateRoomHandler, CreateRoomHandlerInput,
 };
 use futures::{SinkExt, StreamExt};
 use std::net::SocketAddr;
@@ -118,28 +120,17 @@ async fn route_operation(
         Operation::CreateRoom => {
             let handler = CreateRoomHandler::new(room_manager.clone());
             let input = CreateRoomHandlerInput::new(user.clone());
-            let output = handler.run(input).await;
+            let result = handler.run(input).await;
 
-            match output {
+            match result {
                 Ok(output) => {
-                    let response =
-                        payload::create_room::create_room_response::CreateRoomSuccessResponse::new(
-                            output.room_id,
-                        );
-                    let json = serde_json::to_string(&response).unwrap();
-                    let message = Message::text(json);
-                    user.send(message);
+                    let response = CreateRoomResultMapper::success(&output);
+                    user.send(Message::text(serde_json::to_string(&response).unwrap()));
                 }
-                Err(e) => match e {
-                    CreateRoomHandlerError::AlreadyJoined => {
-                        let response = payload::create_room::create_room_response::CreateRoomErrorResponse::new(
-                            payload::create_room::create_room_response::CreateRoomSuccessResponseType::AlreadyJoined
-                        );
-                        let json = serde_json::to_string(&response).unwrap();
-                        let message = Message::text(json);
-                        user.send(message);
-                    }
-                },
+                Err(error) => {
+                    let response = CreateRoomResultMapper::error(&error);
+                    user.send(Message::text(serde_json::to_string(&response).unwrap()));
+                }
             }
         }
         Operation::JoinRoom => {
