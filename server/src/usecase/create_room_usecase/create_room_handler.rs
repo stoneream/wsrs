@@ -6,6 +6,7 @@ use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+#[derive(Debug)]
 pub struct CreateRoomHandlerInput {
     user: Arc<User>,
 }
@@ -16,6 +17,7 @@ impl CreateRoomHandlerInput {
     }
 }
 
+#[derive(Debug)]
 pub struct CreateRoomHandlerOutput {
     pub room_id: RoomId,
 }
