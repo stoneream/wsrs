@@ -1,4 +1,3 @@
-use crate::domain::room::RoomId;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -8,9 +7,9 @@ pub struct CreateRoomSuccessResponse {
 }
 
 impl CreateRoomSuccessResponse {
-    pub fn new(room_id: RoomId) -> Self {
+    pub fn new(room_id: String) -> Self {
         Self {
-            room_id: room_id.to_string(),
+            room_id,
         }
     }
 }

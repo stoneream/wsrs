@@ -5,3 +5,9 @@ use serde::{Deserialize, Serialize};
 pub struct JoinRoomRequestData {
     pub room_id: String,
 }
+
+impl JoinRoomRequestData {
+    pub fn new(room_id: String) -> Self {
+        Self { room_id }
+    }
+}

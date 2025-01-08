@@ -1,4 +1,4 @@
-use crate::payload::create_room::create_room_response::{
+use shared_types::payload::create_room::create_room_response::{
     CreateRoomErrorResponse, CreateRoomSuccessResponse, CreateRoomSuccessResponseType,
 };
 use crate::server::result_mapper::abstract_result_mapper::AbstractResultMapper;
@@ -17,7 +17,7 @@ impl
     > for CreateRoomResultMapper
 {
     fn success(output: &CreateRoomHandlerOutput) -> CreateRoomSuccessResponse {
-        CreateRoomSuccessResponse::new(output.room_id)
+        CreateRoomSuccessResponse::new(output.room_id.to_string())
     }
 
     fn error(error: &CreateRoomHandlerError) -> CreateRoomErrorResponse {

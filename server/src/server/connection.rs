@@ -1,5 +1,5 @@
 use crate::domain::user::User;
-use crate::payload::raw_request::{Operation, RawRequest};
+use shared_types::payload::raw_request::{Operation, RawRequest};
 use crate::server::result_mapper::abstract_result_mapper::AbstractResultMapper;
 use crate::server::result_mapper::create_room::create_room_result_mapper::CreateRoomResultMapper;
 use crate::state::room_manager::RoomManager;
