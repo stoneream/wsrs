@@ -1,5 +1,4 @@
 mod domain;
-mod payload;
 mod server;
 mod state;
 mod usecase;

@@ -1,14 +1,17 @@
 use crate::domain::user::User;
-use shared_types::payload::raw_request::{Operation, RawRequest};
 use crate::server::result_mapper::abstract_result_mapper::AbstractResultMapper;
 use crate::server::result_mapper::create_room::create_room_result_mapper::CreateRoomResultMapper;
+use crate::server::result_mapper::join_room::join_room_result_mapper::JoinRoomResultMapper;
 use crate::state::room_manager::RoomManager;
 use crate::state::user_manager::UserManager;
 use crate::usecase::abstract_handler::AbstractHandler;
 use crate::usecase::create_room_usecase::create_room_handler::{
     CreateRoomHandler, CreateRoomHandlerInput,
 };
+use crate::usecase::join_room_usecase::join_room_handler::{JoinRoomHandler, JoinRoomHandlerInput};
 use futures::{SinkExt, StreamExt};
+use shared_types::payload::join_room::join_room_request_data::JoinRoomRequestData;
+use shared_types::payload::raw_request::{Operation, RawRequest};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpStream;
@@ -134,7 +137,23 @@ async fn route_operation(
             }
         }
         Operation::JoinRoom => {
-            // todo impl join room
+            if let Some(data) = raw_request.data {
+                let data: JoinRoomRequestData = serde_json::from_value(data).unwrap();
+                let handler = JoinRoomHandler::new(room_manager.clone());
+                let input = JoinRoomHandlerInput::new(data.room_id.parse().unwrap(), user.clone());
+                let result = handler.run(input).await;
+
+                match result {
+                    Ok(output) => {
+                        let response = JoinRoomResultMapper::success(&output);
+                        user.send(Message::text(serde_json::to_string(&response).unwrap()));
+                    }
+                    Err(error) => {
+                        let response = JoinRoomResultMapper::error(&error);
+                        user.send(Message::text(serde_json::to_string(&response).unwrap()));
+                    }
+                }
+            }
         }
         Operation::LeaveRoom => {
             // todo impl leave room

@@ -6,6 +6,7 @@ pub mod create_room {
 
 pub mod join_room {
     pub mod join_room_request_data;
+    pub mod join_room_response;
 }
 
 pub mod send_message {

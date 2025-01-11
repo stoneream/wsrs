@@ -26,6 +26,10 @@ impl RoomManager {
         self.rooms.get(room_id)
     }
 
+    pub fn get_room_mut(&mut self, room_id: &RoomId) -> Option<&mut Room> {
+        self.rooms.get_mut(room_id)
+    }
+
     pub fn get_rooms(&self) -> Vec<&Room> {
         self.rooms.values().collect()
     }
