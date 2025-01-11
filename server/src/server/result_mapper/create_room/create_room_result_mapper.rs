@@ -1,9 +1,9 @@
-use shared_types::payload::create_room::create_room_response::{
-    CreateRoomErrorResponse, CreateRoomSuccessResponse, CreateRoomSuccessResponseType,
-};
 use crate::server::result_mapper::abstract_result_mapper::AbstractResultMapper;
 use crate::usecase::create_room_usecase::create_room_handler::{
     CreateRoomHandlerError, CreateRoomHandlerOutput,
+};
+use shared_types::payload::create_room::create_room_response::{
+    CreateRoomErrorResponse, CreateRoomSuccessResponse, CreateRoomSuccessResponseType,
 };
 
 pub struct CreateRoomResultMapper {}
