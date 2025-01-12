@@ -1,12 +1,14 @@
 <script>
-  import init, { greet } from 'client';
+  import init, { Client } from 'client';
   import { onMount } from 'svelte';
   
   onMount(async () => {
   
     await init();
   
-    greet();
+    const client = new Client("ws://localhost:9001");
+
+
   });
 </script>
 

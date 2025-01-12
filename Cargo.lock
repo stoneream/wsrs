@@ -102,8 +102,10 @@ name = "client"
 version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
+ "shared-types",
  "wasm-bindgen",
  "wasm-bindgen-test",
+ "web-sys",
 ]
 
 [[package]]
