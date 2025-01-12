@@ -17,6 +17,14 @@ pub enum Operation {
 }
 
 impl RawRequest {
+    pub fn new(operation: Operation, data: Option<serde_json::Value>) -> Self {
+        RawRequest { operation, data }
+    }
+
+    pub fn to_json(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string(self)
+    }
+
     pub fn parse(json: &str) -> Result<Self, serde_json::Error> {
         serde_json::from_str(json)
     }
