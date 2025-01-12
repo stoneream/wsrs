@@ -31,6 +31,6 @@
 		"vite": "^5.4.11"
 	},
 	"dependencies": {
-		"client": "file:../client/pkg"
+		"client": "file:src/pkg"
 	}
 }
