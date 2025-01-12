@@ -3,6 +3,7 @@ use crate::server::result_mapper::abstract_result_mapper::AbstractResultMapper;
 use crate::server::result_mapper::create_room::create_room_result_mapper::CreateRoomResultMapper;
 use crate::server::result_mapper::join_room::join_room_result_mapper::JoinRoomResultMapper;
 use crate::server::result_mapper::leave_room::leave_room_result_mapper::LeaveRoomResultMapper;
+use crate::server::result_mapper::send_message::send_message_result_mapper::SendMessageResultMapper;
 use crate::state::room_manager::RoomManager;
 use crate::state::user_manager::UserManager;
 use crate::usecase::abstract_handler::AbstractHandler;
@@ -12,6 +13,9 @@ use crate::usecase::create_room_usecase::create_room_handler::{
 use crate::usecase::join_room_usecase::join_room_handler::{JoinRoomHandler, JoinRoomHandlerInput};
 use crate::usecase::leave_room_usecase::leave_room_handler::{
     LeaveRoomHandler, LeaveRoomHandlerInput,
+};
+use crate::usecase::send_message_usecase::send_message_handler::{
+    SendMessageHandler, SendMessageHandlerInput,
 };
 use futures::{SinkExt, StreamExt};
 use shared_types::payload::join_room::join_room_request_data::JoinRoomRequestData;
@@ -24,6 +28,7 @@ use tokio::sync::Mutex;
 use tokio_tungstenite::WebSocketStream;
 use tracing::{error, info};
 use tungstenite::Message;
+use shared_types::payload::send_message::send_message_request_data::SendMessageRequestData;
 
 pub async fn handle_connection(
     room_manager: Arc<Mutex<RoomManager>>,
@@ -176,7 +181,25 @@ async fn route_operation(
             }
         }
         Operation::SendMessage => {
-            // todo impl send message
+            if let Some(data) = raw_request.data {
+                let data: SendMessageRequestData = serde_json::from_value(data).unwrap();
+                let handler = SendMessageHandler::new(room_manager.clone());
+                let input = SendMessageHandlerInput::new(user.clone(), data.message);
+                let result = handler.run(input).await;
+
+                match result {
+                    Ok(output) => {
+                        let response = SendMessageResultMapper::success(&output);
+                        for member in output.members {
+                            member.send(Message::text(serde_json::to_string(&response).unwrap()));
+                        }
+                    }
+                    Err(error) => {
+                        let response = SendMessageResultMapper::error(&error);
+                        user.send(Message::text(serde_json::to_string(&response).unwrap()));
+                    }
+                }
+            }
         }
     }
 }

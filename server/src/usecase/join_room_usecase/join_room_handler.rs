@@ -50,7 +50,7 @@ impl AbstractHandler for JoinRoomHandler {
 
         // すでに入室している場合はエラーを返す
         for room in room_manager.get_rooms() {
-            if room.members.contains(&input.user.user_id) {
+            if room.members.contains_key(&input.user.user_id) {
                 return Err(JoinRoomHandlerError::AlreadyJoined);
             }
         }
@@ -62,7 +62,7 @@ impl AbstractHandler for JoinRoomHandler {
         };
 
         // ルームに入室
-        room.add_member(input.user.user_id);
+        room.add_member(input.user);
 
         Ok(JoinRoomHandlerOutput::new())
     }

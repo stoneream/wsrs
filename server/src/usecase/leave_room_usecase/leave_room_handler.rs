@@ -47,7 +47,7 @@ impl AbstractHandler for LeaveRoomHandler {
             let rooms = room_manager.get_rooms();
             let maybe_room = rooms
                 .iter()
-                .find(|room| room.members.contains(&input.user.user_id));
+                .find(|room| room.members.contains_key(&input.user.user_id));
             maybe_room.map(|r| r.room_id.clone())
         };
 

@@ -15,4 +15,5 @@ pub mod leave_room {
 
 pub mod send_message {
     pub mod send_message_request_data;
+    pub mod send_message_response;
 }

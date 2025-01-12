@@ -50,7 +50,7 @@ impl AbstractHandler for CreateRoomHandler {
 
         // すでに入室している場合はエラーを返す
         for room in room_manager.get_rooms() {
-            if room.members.contains(&input.user.user_id) {
+            if room.members.contains_key(&input.user.user_id) {
                 return Err(CreateRoomHandlerError::AlreadyJoined);
             }
         }
@@ -58,7 +58,7 @@ impl AbstractHandler for CreateRoomHandler {
         // ルームを作成・入室
         let mut room = Room::new();
         let room_id = room.room_id;
-        room.add_member(input.user.user_id);
+        room.add_member(input.user);
         room_manager.add_room(room);
 
         Ok(CreateRoomHandlerOutput::new(room_id))
