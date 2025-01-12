@@ -19,4 +19,8 @@ impl Room {
     pub fn add_member(&mut self, user_id: UserId) {
         self.members.push(user_id);
     }
+
+    pub fn remove_member(&mut self, user_id: UserId) {
+        self.members.retain(|&id| id != user_id);
+    }
 }

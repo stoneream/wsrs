@@ -7,3 +7,7 @@ pub mod create_room {
 pub mod join_room {
     pub mod join_room_result_mapper;
 }
+
+pub mod leave_room {
+    pub mod leave_room_result_mapper;
+}

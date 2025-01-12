@@ -2,6 +2,7 @@ use crate::domain::user::User;
 use crate::server::result_mapper::abstract_result_mapper::AbstractResultMapper;
 use crate::server::result_mapper::create_room::create_room_result_mapper::CreateRoomResultMapper;
 use crate::server::result_mapper::join_room::join_room_result_mapper::JoinRoomResultMapper;
+use crate::server::result_mapper::leave_room::leave_room_result_mapper::LeaveRoomResultMapper;
 use crate::state::room_manager::RoomManager;
 use crate::state::user_manager::UserManager;
 use crate::usecase::abstract_handler::AbstractHandler;
@@ -9,6 +10,9 @@ use crate::usecase::create_room_usecase::create_room_handler::{
     CreateRoomHandler, CreateRoomHandlerInput,
 };
 use crate::usecase::join_room_usecase::join_room_handler::{JoinRoomHandler, JoinRoomHandlerInput};
+use crate::usecase::leave_room_usecase::leave_room_handler::{
+    LeaveRoomHandler, LeaveRoomHandlerInput,
+};
 use futures::{SinkExt, StreamExt};
 use shared_types::payload::join_room::join_room_request_data::JoinRoomRequestData;
 use shared_types::payload::raw_request::{Operation, RawRequest};
@@ -156,7 +160,20 @@ async fn route_operation(
             }
         }
         Operation::LeaveRoom => {
-            // todo impl leave room
+            let handler = LeaveRoomHandler::new(room_manager.clone());
+            let input = LeaveRoomHandlerInput::new(user.clone());
+            let result = handler.run(input).await;
+
+            match result {
+                Ok(output) => {
+                    let response = LeaveRoomResultMapper::success(&output);
+                    user.send(Message::text(serde_json::to_string(&response).unwrap()));
+                }
+                Err(error) => {
+                    let response = LeaveRoomResultMapper::error(&error);
+                    user.send(Message::text(serde_json::to_string(&response).unwrap()));
+                }
+            }
         }
         Operation::SendMessage => {
             // todo impl send message

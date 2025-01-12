@@ -2,9 +2,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct JoinRoomSuccessResponse {}
+pub struct LeaveRoomSuccessResponse {
+}
 
-impl JoinRoomSuccessResponse {
+impl LeaveRoomSuccessResponse {
     pub fn new() -> Self {
         Self {}
     }
@@ -12,19 +13,18 @@ impl JoinRoomSuccessResponse {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct JoinRoomErrorResponse {
-    pub error_type: JoinRoomErrorResponseType
+pub struct LeaveRoomErrorResponse {
+    pub error_type: LeaveRoomErrorResponseType,
 }
 
-impl JoinRoomErrorResponse {
-    pub fn new(error_type: JoinRoomErrorResponseType) -> Self {
+impl LeaveRoomErrorResponse {
+    pub fn new(error_type: LeaveRoomErrorResponseType) -> Self {
         Self { error_type }
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum JoinRoomErrorResponseType {
-    RoomNotFound,
-    AlreadyJoined,
+pub enum LeaveRoomErrorResponseType {
+    NotJoined,
 }

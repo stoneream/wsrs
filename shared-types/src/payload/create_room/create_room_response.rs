@@ -17,17 +17,17 @@ impl CreateRoomSuccessResponse {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct CreateRoomErrorResponse {
-    pub error_type: CreateRoomSuccessResponseType,
+    pub error_type: CreateRoomErrorResponseType,
 }
 
 impl CreateRoomErrorResponse {
-    pub fn new(error_type: CreateRoomSuccessResponseType) -> Self {
+    pub fn new(error_type: CreateRoomErrorResponseType) -> Self {
         Self { error_type }
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum CreateRoomSuccessResponseType {
+pub enum CreateRoomErrorResponseType {
     AlreadyJoined,
 }

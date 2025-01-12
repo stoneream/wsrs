@@ -9,6 +9,10 @@ pub mod join_room {
     pub mod join_room_response;
 }
 
+pub mod leave_room {
+    pub mod leave_room_response;
+}
+
 pub mod send_message {
     pub mod send_message_request_data;
 }

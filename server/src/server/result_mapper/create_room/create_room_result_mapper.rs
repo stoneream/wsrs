@@ -3,7 +3,7 @@ use crate::usecase::create_room_usecase::create_room_handler::{
     CreateRoomHandlerError, CreateRoomHandlerOutput,
 };
 use shared_types::payload::create_room::create_room_response::{
-    CreateRoomErrorResponse, CreateRoomSuccessResponse, CreateRoomSuccessResponseType,
+    CreateRoomErrorResponse, CreateRoomErrorResponseType, CreateRoomSuccessResponse,
 };
 
 pub struct CreateRoomResultMapper {}
@@ -23,7 +23,7 @@ impl
     fn error(error: &CreateRoomHandlerError) -> CreateRoomErrorResponse {
         match error {
             CreateRoomHandlerError::AlreadyJoined => {
-                CreateRoomErrorResponse::new(CreateRoomSuccessResponseType::AlreadyJoined)
+                CreateRoomErrorResponse::new(CreateRoomErrorResponseType::AlreadyJoined)
             }
         }
     }
